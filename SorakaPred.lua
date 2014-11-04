@@ -12,7 +12,7 @@ local SrcLibPath = LIB_PATH .. "SourceLib.lua"
 local SrcLibDownload = false
 
 local UPDATE_HOST = "raw.github.com"
-local UPDATE_PATH = "Astoriane/BoL-Scripts/SorakaPred/master/" .. _ScriptName .. " - " .. myHero.charName .. ".lua"
+local UPDATE_PATH = "isexcats/Bol-Scripts/master/SorakaPred.lua"
 
 local orbwalker = "SOW"
 
