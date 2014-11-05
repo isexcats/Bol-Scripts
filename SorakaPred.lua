@@ -3,10 +3,10 @@
 if myHero.charName ~= "Soraka" then return end
 
 local _ScriptName = "SorakaPred"
-local _ScriptVersion = 1.1
+local Version = 1.1.1
 local _ScriptAuthor = "Isexcats"
 
-local AutoUpdate = false
+local AutoUpdate = true
 local SrcLibURL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
 local SrcLibPath = LIB_PATH .. "SourceLib.lua"
 local SrcLibDownload = false
@@ -41,10 +41,8 @@ if SrcLibDownload == true then
 
 end
 
-if AutoUpdate then
-
-    SourceUpdater(ScriptName .. " - " .. myHero.charName, tostring(ScriptVersion), UPDATE_HOST, UPDATE_PATH, SCRIPT_PATH .. GetCurrentEnv().FILE_NAME):CheckUpdate()
-
+if AUTOUPDATE then
+	SourceUpdater(SCRIPT_NAME, version, "raw.github.com", "/isexcats/Bol-Scripts/master/"..SCRIPT_NAME..".lua", SCRIPT_PATH .. GetCurrentEnv().FILE_NAME, "/isexcats/BolScripts/master/VersionFiles/"..SCRIPT_NAME..".version"):CheckUpdate()
 end
 
 local libs = Require(_ScriptName .. " Libs")
@@ -215,7 +213,7 @@ end
 function __load()
 
     SendMessage("SorakaPred by Isexcats")
-    SendMessage("Script version v" .. _ScriptVersion .. " loaded for " .. myHero.charName)
+    SendMessage("Script version v" .. Version .. " loaded for " .. myHero.charName)
 
    
 
