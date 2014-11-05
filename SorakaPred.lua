@@ -271,8 +271,7 @@ function __initMenu()
             
 
 
-    Menu:addSubMenu("[" .. myHero.charName.. "] Killsteal", "ks")
-        Menu.ks:addParam("enabled", "Enable Auto KS", SCRIPT_PARAM_ONOFF, false)
+ 
 
     Menu:addSubMenu("[" .. myHero.charName.. "] Orbwalk", "orbwalk")
         SOWi:LoadToMenu(Menu.orbwalk)
@@ -352,7 +351,7 @@ function __modes()
     if harassKey    then Harass(Target) end -- ACTIVATE MIXED MODE
     if farmKey      then Farm()         end -- ACTIVATE CLEAR MODE
 
-    if Menu.ks.enabled then KS() end -- ENABLE AUTO KS
+
     if Target ~= nil and ValidTarget(Target) and not Target.canMove and Menu.misc.e then CastE(target, Menu.prediction.e) end
     
 end
@@ -401,7 +400,7 @@ function Harass(target) -- HARASS MODE BEHAVIOUR
     if ValidTarget(target) and target ~= nil and target.type == myHero.type and (myManaPct() >= Menu.harass.mana) then
 
         if Menu.harass.useQ then CastQ(target, Menu.prediction.q) end
-        if Menu.harass.useE then CastW(target, Menu.prediction.e) end
+        if Menu.harass.useE then CastE(target, Menu.prediction.e) end
 
 
     end
@@ -588,53 +587,6 @@ function AutoUltimate()
             end
         end
     end
-
-
-
-
-
-function KS() -- AUTO KS FUNCTION
-
-    for _, enemy in ipairs(GetEnemyHeroes()) do
-
-         qDmg = getDmg("Q", enemy, myHero)
-
-        if ValidTarget(enemy) and enemy.visible then
-
-            if enemy.health < qDmg then CastQ(enemy) end
-            
-
-        end
-
-    end
-
-         eDmg = getDmg("E", enemy, myHero)
-
-        if ValidTarget(enemy) and enemy.visible then
-
-            if enemy.health < eDmg then CastE(enemy) end
-            
-
-        end
-
-    end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
