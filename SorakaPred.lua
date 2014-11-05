@@ -3,7 +3,7 @@
 if myHero.charName ~= "Soraka" then return end
 
 local _ScriptName = "SorakaPred"
-local _ScriptVersion = 1.0
+local _ScriptVersion = 1.1
 local _ScriptAuthor = "Isexcats"
 
 local AutoUpdate = false
@@ -246,10 +246,12 @@ function __initMenu()
         Menu.combo:addParam("useQ", "Enable Q (".. SpellTable[_Q].name ..")", SCRIPT_PARAM_ONOFF, true)
         Menu.combo:addParam("useE", "Enable E (".. SpellTable[_E].name ..")", SCRIPT_PARAM_ONOFF, true)
         Menu.combo:addParam("mana", "Min Mana For Combo", SCRIPT_PARAM_SLICE, 0, 0, 100, 0)
+        Menu.combo:addParam("minE", "Minimum targets to use E", SCRIPT_PARAM_SLICE, 1, 1, 4, 0)
 
     Menu:addSubMenu("[" .. myHero.charName.. "] Harass", "harass")
         Menu.harass:addParam("useQ", "Enable Q (".. SpellTable[_Q].name ..")", SCRIPT_PARAM_ONOFF, true)
         Menu.harass:addParam("useE", "Enable E (".. SpellTable[_E].name ..")", SCRIPT_PARAM_ONOFF, true)
+        Menu.harass:addParam("minE", "Minimum targets to use E", SCRIPT_PARAM_SLICE, 1, 1, 4, 0)
      
         Menu.harass:addParam("mana", "Min Mana For Harass", SCRIPT_PARAM_SLICE, 0, 0, 100, 0)
 
@@ -259,16 +261,16 @@ function __initMenu()
 
     Menu:addSubMenu("[" .. myHero.charName.. "] Ultimate", "ult")
         Menu.ult:addParam("UltCast", "Auto Ultimate On: ", SCRIPT_PARAM_LIST, 3, {"Only Me", "Allies", "Both"})
-		Menu.ult:addParam("UltMode", "Auto Ultimate Mode: ", SCRIPT_PARAM_LIST, 1, {"Global", "In Range"})
-		Menu.ult:addParam("UltManager", "Ultimate allies under", SCRIPT_PARAM_SLICE, 25, 0, 100, 0)
-		Menu.ult:addParam("UltManager2", "Ultimate me under", SCRIPT_PARAM_SLICE, 25, 0, 100, 0)
+        Menu.ult:addParam("UltMode", "Auto Ultimate Mode: ", SCRIPT_PARAM_LIST, 1, {"Global", "In Range"})
+        Menu.ult:addParam("UltManager", "Ultimate allies under", SCRIPT_PARAM_SLICE, 25, 0, 100, 0)
+        Menu.ult:addParam("UltManager2", "Ultimate me under", SCRIPT_PARAM_SLICE, 25, 0, 100, 0)
 
-	  Menu:addSubMenu("[" .. myHero.charName.. "] Heal", "heal")		
-	  	Menu.heal:addParam("UseHeal", "Auto Heal Allies", SCRIPT_PARAM_ONOFF, true)
-		Menu.heal:addParam("HealManager", "Heal allies under", SCRIPT_PARAM_SLICE, 65, 0, 100, 0)
-		Menu.heal:addParam("HPManager", "Don't heal under (my hp)", SCRIPT_PARAM_SLICE, 50, 0, 100, 0)
+      Menu:addSubMenu("[" .. myHero.charName.. "] Heal", "heal")        
+        Menu.heal:addParam("UseHeal", "Auto Heal Allies", SCRIPT_PARAM_ONOFF, true)
+        Menu.heal:addParam("HealManager", "Heal allies under", SCRIPT_PARAM_SLICE, 65, 0, 100, 0)
+        Menu.heal:addParam("HPManager", "Don't heal under (my hp)", SCRIPT_PARAM_SLICE, 50, 0, 100, 0)
         
-			
+            
 
 
     Menu:addSubMenu("[" .. myHero.charName.. "] Killsteal", "ks")
@@ -410,10 +412,10 @@ end
 
 function Farm() -- LANE CLEAR
 
-	enemyMinions:update()
+    enemyMinions:update()
 
     if not (myManaPct() < Menu.farm.mana) then
-			if SpellTable[_Q].ready then
+            if SpellTable[_Q].ready then
         
         for _, minion in pairs(enemyMinions.objects) do
             if minion ~= nil and ValidTarget(minion) then
@@ -430,7 +432,7 @@ function Farm() -- LANE CLEAR
                 end
             end
         end
-			end
+            end
     end
 
 end
@@ -488,7 +490,11 @@ function CastE(target, chance) -- CAST W SKILL
             aoeCastPos, hitChance, nTargets = VP:GetCircularAOECastPosition(target, SpellTable[_E].delay, SpellTable[_E].width, SpellTable[_E].range, SpellTable[_E].speed, myHero)
         end
 
-
+      if GetMode() == 1 then
+            n = Menu.combo.minE
+        else
+            n = Menu.harass.minE
+        end
 
 
         if GetEnemyCountInPos(aoeCastPos, SpellTable[_E].range) >= n then
@@ -509,88 +515,111 @@ function CastE(target, chance) -- CAST W SKILL
 end
 
 function AutoHeal()
-		for i, ally in ipairs(GetAllyHeroes()) do
-			if SpellTable[_W].ready and Menu.heal.UseHeal then
-				if (ally.health / ally.maxHealth < Menu.heal.HealManager /100) and (myHero.health / myHero.maxHealth > Menu.heal.HPManager /100) then
-					if GetDistance(ally, myHero) <= SpellTable[_W].range then
-						if Menu.misc.packet then
-							Packet("S_CAST", {spellId = _W, targetNetworkId = ally.networkID}):send()
-							return
-						end
+        for i, ally in ipairs(GetAllyHeroes()) do
+            if SpellTable[_W].ready and Menu.heal.UseHeal then
+                if (ally.health / ally.maxHealth < Menu.heal.HealManager /100) and (myHero.health / myHero.maxHealth > Menu.heal.HPManager /100) then
+                    if GetDistance(ally, myHero) <= SpellTable[_W].range then
+                        if Menu.misc.packet then
+                            Packet("S_CAST", {spellId = _W, targetNetworkId = ally.networkID}):send()
+                            return
+                        end
 
-						if not Menu.misc.packet then
-							CastSpell(_W, ally)
-						end
-					end
-				end
-			end
-		end
-	end
+                        if not Menu.misc.packet then
+                            CastSpell(_W, ally)
+                        end
+                    end
+                end
+            end
+        end
+    end
 
 function AutoUltimate()
-		for i, ally in ipairs(GetAllyHeroes()) do
+        for i, ally in ipairs(GetAllyHeroes()) do
 
-			------------------------------
-			if ally.dead then return end
-			if myHero.dead then return end
-			------------------------------
+            ------------------------------
+            if ally.dead then return end
+            if myHero.dead then return end
+            ------------------------------
 
-			if SpellTable[_R].ready and Menu.ult.UseUlt then
-				if Menu.ult.UltCast == 2 then
-					if (ally.health / ally.maxHealth < Menu.ult.UltManager /100) then
-						if Menu.ult.UltMode == 1 then
-							if Menu.misc.packet then
-								Packet("S_CAST", {spellId = _R, targetNetworkId = myHero.networkID}):send()
-							elseif not Menu.misc.packet then
-								CastSpell(_R)
-							end
-						elseif Menu.ult.UltMode == 2 then
-							if GetDistance(ally, myHero) <= 1500 then
-								if Menu.misc.packet then
-									Packet("S_CAST", {spellId = _R, targetNetworkId = myHero.networkID}):send()
-								elseif not Menu.misc.packet then
-									CastSpell(_R)
-								end
-							end
-						end
-					end
-				elseif Menu.ult.UltCast == 1 then
-					if (myHero.health / myHero.maxHealth < Menu.ult.UltManager2 /100) then
-						if Menu.misc.packet then
-							Packet("S_CAST", {spellId = _R, targetNetworkId = myHero.networkID}):send()
-						elseif not Menu.misc.packet then
-							CastSpell(_R)
-						end
-					end
-				elseif Menu.ult.UltCast == 3 then
-					if (ally.health / ally.maxHealth < Menu.ult.UltManager /100) or (myHero.health / myHero.maxHealth < Menu.ult.UltManager2 /100) then
-						if Menu.ult.UltMode == 1 then
-							if Menu.misc.packet then
-								Packet("S_CAST", {spellId = _R, targetNetworkId = myHero.networkID}):send()
-							elseif not Menu.misc.packet then
-								CastSpell(_R)
-							end
-						elseif Menu.ult.UltMode == 2 then
-							if GetDistance(ally, myHero) <= 1500 then
-								if Menu.misc.packet then
-									Packet("S_CAST", {spellId = _R, targetNetworkId = myHero.networkID}):send()
-								elseif not Menu.misc.packet then
-									CastSpell(_R)
-								end
-							end
-						end
-					end
-				end
-			end
-		end
-	end
-
-
+            if SpellTable[_R].ready and Menu.ult.UseUlt then
+                if Menu.ult.UltCast == 2 then
+                    if (ally.health / ally.maxHealth < Menu.ult.UltManager /100) then
+                        if Menu.ult.UltMode == 1 then
+                            if Menu.misc.packet then
+                                Packet("S_CAST", {spellId = _R, targetNetworkId = myHero.networkID}):send()
+                            elseif not Menu.misc.packet then
+                                CastSpell(_R)
+                            end
+                        elseif Menu.ult.UltMode == 2 then
+                            if GetDistance(ally, myHero) <= 1500 then
+                                if Menu.misc.packet then
+                                    Packet("S_CAST", {spellId = _R, targetNetworkId = myHero.networkID}):send()
+                                elseif not Menu.misc.packet then
+                                    CastSpell(_R)
+                                end
+                            end
+                        end
+                    end
+                elseif Menu.ult.UltCast == 1 then
+                    if (myHero.health / myHero.maxHealth < Menu.ult.UltManager2 /100) then
+                        if Menu.misc.packet then
+                            Packet("S_CAST", {spellId = _R, targetNetworkId = myHero.networkID}):send()
+                        elseif not Menu.misc.packet then
+                            CastSpell(_R)
+                        end
+                    end
+                elseif Menu.ult.UltCast == 3 then
+                    if (ally.health / ally.maxHealth < Menu.ult.UltManager /100) or (myHero.health / myHero.maxHealth < Menu.ult.UltManager2 /100) then
+                        if Menu.ult.UltMode == 1 then
+                            if Menu.misc.packet then
+                                Packet("S_CAST", {spellId = _R, targetNetworkId = myHero.networkID}):send()
+                            elseif not Menu.misc.packet then
+                                CastSpell(_R)
+                            end
+                        elseif Menu.ult.UltMode == 2 then
+                            if GetDistance(ally, myHero) <= 1500 then
+                                if Menu.misc.packet then
+                                    Packet("S_CAST", {spellId = _R, targetNetworkId = myHero.networkID}):send()
+                                elseif not Menu.misc.packet then
+                                    CastSpell(_R)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
 
 
 
 
 
+function KS() -- AUTO KS FUNCTION
+
+    for _, enemy in ipairs(GetEnemyHeroes()) do
+
+         qDmg = getDmg("Q", enemy, myHero)
+
+        if ValidTarget(enemy) and enemy.visible then
+
+            if enemy.health < qDmg then CastQ(enemy) end
+            
+
+        end
+
+    end
+
+         eDmg = getDmg("E", enemy, myHero)
+
+        if ValidTarget(enemy) and enemy.visible then
+
+            if enemy.health < eDmg then CastE(enemy) end
+            
+
+        end
+
+    end
 
 
 
@@ -612,7 +641,11 @@ function AutoUltimate()
 
 
 
-	-- MAIN DRAW FUNCTION --
+
+
+
+
+    -- MAIN DRAW FUNCTION --
 function __draw()
 
     DrawCircles()
