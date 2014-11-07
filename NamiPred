@@ -1,6 +1,6 @@
 
 
-if myHero.charName ~= "Soraka" then return end
+if myHero.charName ~= "Nami" then return end
 
 local _ScriptName = "NamiPred"
 local _ScriptVersion = 1.1
