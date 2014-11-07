@@ -3,7 +3,7 @@
 if myHero.charName ~= "Nami" then return end
 
 local _ScriptName = "NamiPred"
-local _ScriptVersion = 1.0
+local _ScriptVersion = 1.1
 local _ScriptAuthor = "Isexcats"
 
 local AutoUpdate = false
@@ -485,7 +485,6 @@ function CastE(target, chance) -- CAST W SKILL
 
     end
 
-end
 
 function AutoHeal()
         for i, ally in ipairs(GetAllyHeroes()) do
