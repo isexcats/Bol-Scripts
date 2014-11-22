@@ -3,10 +3,10 @@
 if myHero.charName ~= "Soraka" then return end
 
 local _ScriptName = "SorakaPred"
-local Version = 1.1
+local Version = 1.2
 local _ScriptAuthor = "Isexcats"
 
-local AutoUpdate = true
+local AutoUpdate = false
 local SrcLibURL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
 local SrcLibPath = LIB_PATH .. "SourceLib.lua"
 local SrcLibDownload = false
@@ -42,7 +42,7 @@ if SrcLibDownload == true then
 end
 
 if AUTOUPDATE then
-	SourceUpdater(SCRIPT_NAME, version, "raw.github.com", "/isexcats/Bol-Scripts/master/"..SCRIPT_NAME..".lua", SCRIPT_PATH .. GetCurrentEnv().FILE_NAME, "/isexcats/BolScripts/master/VersionFiles/"..SCRIPT_NAME..".version"):CheckUpdate()
+    SourceUpdater(SCRIPT_NAME, version, "raw.github.com", "/isexcats/Bol-Scripts/master/"..SCRIPT_NAME..".lua", SCRIPT_PATH .. GetCurrentEnv().FILE_NAME, "/isexcats/BolScripts/master/VersionFiles/"..SCRIPT_NAME..".version"):CheckUpdate()
 end
 
 local libs = Require(_ScriptName .. " Libs")
@@ -139,7 +139,7 @@ local Ranges = { AA = 550 }
             id = "w",
             name = myHero:GetSpellData(_E).name,
             ready = false,
-            range = 450,
+            range = 550,
             width = 0,
             speed = 1000,
             delay = 0.5,
@@ -243,13 +243,14 @@ function __initMenu()
     Menu:addSubMenu("[" .. myHero.charName.. "] Combo", "combo")
         Menu.combo:addParam("useQ", "Enable Q (".. SpellTable[_Q].name ..")", SCRIPT_PARAM_ONOFF, true)
         Menu.combo:addParam("useE", "Enable E (".. SpellTable[_E].name ..")", SCRIPT_PARAM_ONOFF, true)
+        Menu.combo:addParam("autoE", "Automatically use E on X targets (".. SpellTable[_E].name ..")", SCRIPT_PARAM_ONOFF, true)
         Menu.combo:addParam("mana", "Min Mana For Combo", SCRIPT_PARAM_SLICE, 0, 0, 100, 0)
-        Menu.combo:addParam("minE", "Minimum targets to use E", SCRIPT_PARAM_SLICE, 1, 1, 4, 0)
+        Menu.combo:addParam("minE", "Only use E if it will hit X targets", SCRIPT_PARAM_SLICE, 1, 1, 4, 0)
+        Menu.combo:addParam("autoMinE", "automatically use E on X targets", SCRIPT_PARAM_SLICE, 2, 2, 4, 0)
 
     Menu:addSubMenu("[" .. myHero.charName.. "] Harass", "harass")
         Menu.harass:addParam("useQ", "Enable Q (".. SpellTable[_Q].name ..")", SCRIPT_PARAM_ONOFF, true)
         Menu.harass:addParam("useE", "Enable E (".. SpellTable[_E].name ..")", SCRIPT_PARAM_ONOFF, true)
-        Menu.harass:addParam("minE", "Minimum targets to use E", SCRIPT_PARAM_SLICE, 1, 1, 4, 0)
      
         Menu.harass:addParam("mana", "Min Mana For Harass", SCRIPT_PARAM_SLICE, 0, 0, 100, 0)
 
@@ -259,7 +260,9 @@ function __initMenu()
 
     Menu:addSubMenu("[" .. myHero.charName.. "] Ultimate", "ult")
         Menu.ult:addParam("UltCast", "Auto Ultimate On: ", SCRIPT_PARAM_LIST, 3, {"Only Me", "Allies", "Both"})
-        Menu.ult:addParam("UltMode", "Auto Ultimate Mode: ", SCRIPT_PARAM_LIST, 1, {"Global", "In Range"})
+        Menu.ult:addParam("UltMode", "Auto Ultimate Mode: ", SCRIPT_PARAM_LIST, 1, {"Global", 
+"In Range"})
+Menu.ult:addParam("UseUlt", "Use ult", SCRIPT_PARAM_ONOFF, true)
         Menu.ult:addParam("UltManager", "Ultimate allies under", SCRIPT_PARAM_SLICE, 25, 0, 100, 0)
         Menu.ult:addParam("UltManager2", "Ultimate me under", SCRIPT_PARAM_SLICE, 25, 0, 100, 0)
 
@@ -365,8 +368,9 @@ if Menu.heal.UseHeal then --ENABLE AUTO HEAL
         if Menu.ult.UseUlt then --ENABLE AUTO ULT
             AutoUltimate()
         end
-
-
+if Menu.ult.autoE then --ENABLE AUTO E
+            AutoE()
+        end
     -- SKILLS -- CHECK IF SPELLS ARE READY
     for i in pairs(SpellTable) do
         SpellTable[i].ready = myHero:CanUseSpell(i) == READY
@@ -481,7 +485,7 @@ function CastE(target, chance) -- CAST W SKILL
 
         local aoeCastPos, hitChance, castInfo, nTargets
         if VIP_USER and Menu.prediction.type and Menu.prediction.type == 1 then
-            aoeCastPos, castInfo = Prodiction.GetCircularAOEPrediction(target, SpellTable[_Q].range, SpellTable[_Q].speed, SpellTable[_Q].delay, SpellTable[_Q].width, myHero)
+            aoeCastPos, castInfo = Prodiction.GetCircularAOEPrediction(target, SpellTable[_E].range, SpellTable[_E].speed, SpellTable[_E].delay, SpellTable[_E].width, myHero)
             hitChance = tonumber(castInfo.hitchance)
         else
             aoeCastPos, hitChance, nTargets = VP:GetCircularAOECastPosition(target, SpellTable[_E].delay, SpellTable[_E].width, SpellTable[_E].range, SpellTable[_E].speed, myHero)
@@ -508,6 +512,38 @@ function CastE(target, chance) -- CAST W SKILL
         end
 
     end
+
+end
+
+
+function AutoE(target) -- CAST E Automatically
+
+ if target ~= nil and ValidTarget(target) and GetDistance(target) <= SpellTable[_E].range and SpellTable[_E].ready then
+
+local aoeCastPos, hitChance, castInfo, nTargets
+        if VIP_USER and Menu.prediction.type and Menu.prediction.type == 1 then
+            aoeCastPos, castInfo = Prodiction.GetCircularAOEPrediction(target, SpellTable[_E].range, SpellTable[_E].speed, SpellTable[_E].delay, SpellTable[_E].width, myHero)
+            hitChance = tonumber(castInfo.hitchance)
+        else
+            aoeCastPos, hitChance, nTargets = VP:GetCircularAOECastPosition(target, SpellTable[_E].delay, SpellTable[_E].width, SpellTable[_E].range, SpellTable[_E].speed, myHero)
+        end
+end
+if CountEnemyHeroInRange(SpellTable[_E].range) >= Menu.combo.autoMinE then
+
+            if VIP_USER and Menu.misc.packet then
+
+                local packet = SpellPacket(_R, aoeCastPos.x, aoeCastPos.z)
+                Packet("S_CAST", packet):send()
+
+            else
+
+                CastSpell(_E)
+
+            end
+
+        end
+
+
 
 end
 
