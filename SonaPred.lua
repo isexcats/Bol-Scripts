@@ -3,7 +3,7 @@
 if myHero.charName ~= "Sona" then return end
 
 local _ScriptName = "SonaPred"
-local Version = 1.2
+local Version = 1.0
 local _ScriptAuthor = "Isexcats"
 
 local AutoUpdate = false
