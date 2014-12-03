@@ -6,7 +6,7 @@ local _ScriptName = "SonaPred"
 local Version = 1.2
 local _ScriptAuthor = "Isexcats"
 
-local AutoUpdate = false
+local AutoUpdate = true
 local SrcLibURL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
 local SrcLibPath = LIB_PATH .. "SourceLib.lua"
 local SrcLibDownload = false
