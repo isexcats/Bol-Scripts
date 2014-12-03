@@ -3,7 +3,7 @@
 if myHero.charName ~= "Sona" then return end
 
 local _ScriptName = "SonaPred"
-local Version = 1.0
+local Version = 1.2
 local _ScriptAuthor = "Isexcats"
 
 local AutoUpdate = false
@@ -243,7 +243,6 @@ function __initMenu()
     Menu:addSubMenu("[" .. myHero.charName.. "] Combo", "combo")
         Menu.combo:addParam("useQ", "Enable Q (".. SpellTable[_Q].name ..")", SCRIPT_PARAM_ONOFF, true)
         Menu.combo:addParam("useE", "Enable E (".. SpellTable[_E].name ..")", SCRIPT_PARAM_ONOFF, true)
-				      Menu.combo:addParam("useR", "Enable R (".. SpellTable[_E].name ..")", SCRIPT_PARAM_ONOFF, true)
         Menu.combo:addParam("autoR", "Automatically use R on X targets (".. SpellTable[_R].name ..")", SCRIPT_PARAM_ONOFF, true)
         Menu.combo:addParam("mana", "Min Mana For Combo", SCRIPT_PARAM_SLICE, 0, 0, 100, 0)
         Menu.combo:addParam("minR", "Only use R if it will hit X targets", SCRIPT_PARAM_SLICE, 1, 1, 4, 0)
@@ -350,12 +349,12 @@ end
 function __update() -- UPDATE VARIABLES ON TICK
 if Menu.heal.UseHeal then --ENABLE AUTO HEAL
             AutoHeal()
-						
+                        
         end
 
     if Menu.combo.autoR then
         AutoR()
-				
+                
     end
 
     -- SKILLS -- CHECK IF SPELLS ARE READY
@@ -380,7 +379,7 @@ function Combo(target) -- CARRY MODE BEHAVIOUS
 
         if myManaPct() >= Menu.combo.mana and Menu.combo.useQ then CastQ()  end
         if myManaPct() >= Menu.combo.mana and Menu.combo.useE then CastE() end
-         if myManaPct() >= Menu.combo.mana and Menu.combo.useR then CastR(target, Menu.prediction.r) end
+         if myManaPct() >= Menu.combo.mana and Menu.combo.useR then CastR(target, Menu.prediction.R) end
         
 
     end
@@ -412,7 +411,7 @@ function CastQ(target) -- CAST W SKILL
                 for i=1, heroManager.iCount do
                         local enemy = heroManager:GetHero(i)
                         if enemy.team ~= myHero.team and enemy.visible and enemy.dead == false and myHero:GetDistance(enemy) < SpellTable[_Q].range then
-												 if Menu.misc.packet then
+                                                 if Menu.misc.packet then
                             Packet("S_CAST", {spellId = _Q}):send()
                             return
                         end
@@ -428,7 +427,7 @@ end
 function CastE(target, chance) -- CAST W SKILL
 
     for i, ally in ipairs(GetAllyHeroes()) do
-            if SpellTable[_E].ready and Menu.Combo.useE then
+            if SpellTable[_E].ready and Menu.combo.useE then
                     if GetDistance(ally, myHero) <= SpellTable[_E].range then
                         if Menu.misc.packet then
                             Packet("S_CAST", {spellId = _E}):send()
